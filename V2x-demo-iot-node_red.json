@@ -1,0 +1,1054 @@
+[
+    {
+        "id": "eb12423ff5842f3c",
+        "type": "tab",
+        "label": "V2X — Full Demo",
+        "disabled": true,
+        "info": ""
+    },
+    {
+        "id": "8a79c042ab29fd04",
+        "type": "inject",
+        "z": "eb12423ff5842f3c",
+        "name": "Auto cycle tick (1s)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "1",
+        "crontab": "",
+        "once": true,
+        "onceDelay": "1",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 160,
+        "y": 100,
+        "wires": [
+            [
+                "edd4349b8152e54a"
+            ]
+        ]
+    },
+    {
+        "id": "edd4349b8152e54a",
+        "type": "function",
+        "z": "eb12423ff5842f3c",
+        "name": "Traffic Light: cycle + overrides",
+        "func": "const D={RED:10,GREEN:10,YELLOW:3};\nlet mode=context.get('mode')||'AUTO';\nlet light=context.get('light')||'RED';\nlet remain=context.get('remain');\nif(msg.mode) mode=msg.mode;\nif(msg.light){light=String(msg.light);remain=D[light];}\nif(mode==='AUTO'){\n  if(typeof remain!=='number') remain=D[light];\n  remain-=1;\n  if(remain<=0){const order=['RED','GREEN','YELLOW'];let i=order.indexOf(light);light=order[(i+1)%order.length];remain=D[light];}\n}\ncontext.set('mode',mode);context.set('light',light);context.set('remain',remain);\nconst out={topic:'traffic/light/status',payload:{light,duration:remain}};\nnode.status({fill:(light==='RED'?'red':light==='YELLOW'?'yellow':'green'),shape:'dot',text:`${light} (${remain||0}s) ${mode}`});\nreturn [out,{payload:{light,remain,mode}}];",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 470,
+        "y": 100,
+        "wires": [
+            [
+                "f7634461a8c9fcba",
+                "30bcab3436422451"
+            ],
+            [
+                "fd65817f6be34fb6",
+                "ba144b6d11237ef1"
+            ]
+        ]
+    },
+    {
+        "id": "f7634461a8c9fcba",
+        "type": "mqtt out",
+        "z": "eb12423ff5842f3c",
+        "name": "Broadcast light",
+        "topic": "",
+        "qos": "0",
+        "retain": "true",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "77d0617828af9c52",
+        "x": 780,
+        "y": 100,
+        "wires": []
+    },
+    {
+        "id": "30bcab3436422451",
+        "type": "ui_text",
+        "z": "eb12423ff5842f3c",
+        "group": "ui_grp_light",
+        "order": 2,
+        "width": 28,
+        "height": 2,
+        "name": "State",
+        "label": "State",
+        "format": "{{msg.payload.light}} ({{msg.payload.duration}}s)",
+        "layout": "row-spread",
+        "className": "",
+        "style": false,
+        "font": "",
+        "fontSize": "",
+        "color": "#000000",
+        "x": 730,
+        "y": 40,
+        "wires": []
+    },
+    {
+        "id": "fd65817f6be34fb6",
+        "type": "ui_template",
+        "z": "eb12423ff5842f3c",
+        "group": "ui_grp_light",
+        "name": "Light Indicator",
+        "order": 1,
+        "width": 28,
+        "height": 6,
+        "format": "<div style=\"display:flex;gap:16px;align-items:center;justify-content:center\">\n  <div style=\"text-align:center\">\n    <div style=\"width:80px;height:80px;border-radius:50%;background: {{msg.payload.light==='RED' ? '#e53935':'#641717'}};\"></div>\n    <div>RED</div>\n  </div>\n  <div style=\"text-align:center\">\n    <div style=\"width:80px;height:80px;border-radius:50%;background: {{msg.payload.light==='YELLOW' ? '#fdd835':'#7f6f1a'}};\"></div>\n    <div>YELLOW</div>\n  </div>\n  <div style=\"text-align:center\">\n    <div style=\"width:80px;height:80px;border-radius:50%;background: {{msg.payload.light==='GREEN' ? '#43a047':'#1b3a22'}};\"></div>\n    <div>GREEN</div>\n  </div>\n</div>\n<div style=\"text-align:center;margin-top:8px\">Mode: <b>{{ msg.payload.mode === 'MAN' ? 'NORMAL' : msg.payload.mode }}</b> &nbsp; | &nbsp; Next change in <b>{{msg.payload.remain}} s</b></div>",
+        "storeOutMessages": true,
+        "fwdInMessages": true,
+        "resendOnRefresh": false,
+        "templateScope": "local",
+        "className": "",
+        "x": 720,
+        "y": 200,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "aa0a14b31a7ff8a2",
+        "type": "ui_switch",
+        "z": "eb12423ff5842f3c",
+        "name": "Auto Mode",
+        "label": "Auto Mode",
+        "tooltip": "",
+        "group": "ui_grp_controls",
+        "order": 1,
+        "width": 9,
+        "height": 1,
+        "passthru": true,
+        "decouple": "false",
+        "topic": "",
+        "topicType": "str",
+        "style": "",
+        "onvalue": "AUTO",
+        "onvalueType": "str",
+        "onicon": "",
+        "oncolor": "",
+        "offvalue": "MAN",
+        "offvalueType": "str",
+        "officon": "",
+        "offcolor": "",
+        "animate": true,
+        "className": "",
+        "x": 150,
+        "y": 180,
+        "wires": [
+            [
+                "e5e5eff2294e4ebf"
+            ]
+        ]
+    },
+    {
+        "id": "e5e5eff2294e4ebf",
+        "type": "function",
+        "z": "eb12423ff5842f3c",
+        "name": "→ set mode",
+        "func": "return {mode: msg.payload};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 420,
+        "y": 180,
+        "wires": [
+            [
+                "edd4349b8152e54a"
+            ]
+        ]
+    },
+    {
+        "id": "f9d98029f572aefb",
+        "type": "ui_button",
+        "z": "eb12423ff5842f3c",
+        "name": "Set RED",
+        "group": "ui_grp_controls",
+        "order": 5,
+        "width": 3,
+        "height": 2,
+        "passthru": false,
+        "label": "RED",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "#e53935",
+        "className": "",
+        "icon": "",
+        "payload": "RED",
+        "payloadType": "str",
+        "topic": "",
+        "topicType": "str",
+        "x": 140,
+        "y": 220,
+        "wires": [
+            [
+                "368c67cb04206597"
+            ]
+        ]
+    },
+    {
+        "id": "5bc8ec55c4b1858d",
+        "type": "ui_button",
+        "z": "eb12423ff5842f3c",
+        "name": "Set GREEN",
+        "group": "ui_grp_controls",
+        "order": 3,
+        "width": 3,
+        "height": 2,
+        "passthru": false,
+        "label": "GREEN",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "#43a047",
+        "className": "",
+        "icon": "",
+        "payload": "GREEN",
+        "payloadType": "str",
+        "topic": "",
+        "topicType": "str",
+        "x": 150,
+        "y": 260,
+        "wires": [
+            [
+                "368c67cb04206597"
+            ]
+        ]
+    },
+    {
+        "id": "970f67fd3574a533",
+        "type": "ui_button",
+        "z": "eb12423ff5842f3c",
+        "name": "Set YELLOW",
+        "group": "ui_grp_controls",
+        "order": 4,
+        "width": 3,
+        "height": 2,
+        "passthru": false,
+        "label": "YELLOW",
+        "tooltip": "",
+        "color": "",
+        "bgcolor": "#fdd835",
+        "className": "",
+        "icon": "",
+        "payload": "YELLOW",
+        "payloadType": "str",
+        "topic": "",
+        "topicType": "str",
+        "x": 160,
+        "y": 300,
+        "wires": [
+            [
+                "368c67cb04206597"
+            ]
+        ]
+    },
+    {
+        "id": "368c67cb04206597",
+        "type": "function",
+        "z": "eb12423ff5842f3c",
+        "name": "→ set light",
+        "func": "return {light: String(msg.payload)};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 420,
+        "y": 260,
+        "wires": [
+            [
+                "edd4349b8152e54a"
+            ]
+        ]
+    },
+    {
+        "id": "db0d59cfbb438443",
+        "type": "mqtt in",
+        "z": "eb12423ff5842f3c",
+        "name": "Light IN (car_01)",
+        "topic": "traffic/light/status",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "77d0617828af9c52",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 380,
+        "wires": [
+            [
+                "fd7982535deb3183"
+            ]
+        ]
+    },
+    {
+        "id": "fd7982535deb3183",
+        "type": "function",
+        "z": "eb12423ff5842f3c",
+        "name": "Store light (car_01)",
+        "func": "flow.set('light_car01', msg.payload.light || 'RED');\nreturn null;",
+        "outputs": 0,
+        "noerr": 0,
+        "x": 390,
+        "y": 380,
+        "wires": []
+    },
+    {
+        "id": "8e24afc40ac31998",
+        "type": "inject",
+        "z": "eb12423ff5842f3c",
+        "name": "car_01 tick (5s)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "5",
+        "once": true,
+        "onceDelay": "2",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 130,
+        "y": 440,
+        "wires": [
+            [
+                "7baf65e7e8a36d01"
+            ]
+        ]
+    },
+    {
+        "id": "7baf65e7e8a36d01",
+        "type": "function",
+        "z": "eb12423ff5842f3c",
+        "name": "Generate telemetry (car_01)",
+        "func": "const veh='car_01';\nconst light=flow.get('light_car01')||'RED';\nlet x=flow.get('x01')||Math.random()*20;let y=flow.get('y01')||Math.random()*20;let dir=flow.get('dir01')||(Math.random()<0.5?'E':'N');\nlet speed,status;if(light==='RED'){speed=0;status='Stopped';}else if(light==='YELLOW'){speed=10+Math.floor(Math.random()*21);status='Slowing';}else{speed=40+Math.floor(Math.random()*61);status='Moving';}\nif(speed>0){const step=speed/100.0;if(dir==='E')x+=step;else y+=step;if(Math.random()<0.05)dir=(dir==='E'?'N':'E');}\nx=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));flow.set('x01',x);flow.set('y01',y);flow.set('dir01',dir);\nconst payload={vehicle_id:veh,location:{x:Number(x.toFixed(3)),y:Number(y.toFixed(3))},speed,status,direction:dir,light,ts:Date.now()};\nreturn {topic:`vehicles/data/${veh}`,payload};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 420,
+        "y": 420,
+        "wires": [
+            [
+                "a9960122c2d84575",
+                "f37e31e8c0b09bc0"
+            ]
+        ]
+    },
+    {
+        "id": "dddeddf02b4ab1a7",
+        "type": "mqtt in",
+        "z": "eb12423ff5842f3c",
+        "name": "Light IN (car_02)",
+        "topic": "traffic/light/status",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "77d0617828af9c52",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 120,
+        "y": 500,
+        "wires": [
+            [
+                "206fbcdfe8c9dc33"
+            ]
+        ]
+    },
+    {
+        "id": "206fbcdfe8c9dc33",
+        "type": "function",
+        "z": "eb12423ff5842f3c",
+        "name": "Store light (car_02)",
+        "func": "flow.set('light_car02', msg.payload.light || 'RED');\nreturn null;",
+        "outputs": 0,
+        "noerr": 0,
+        "x": 390,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "b71ca2c3f1ede9b8",
+        "type": "inject",
+        "z": "eb12423ff5842f3c",
+        "name": "car_02 tick (5s)",
+        "props": [
+            {
+                "p": "payload"
+            }
+        ],
+        "repeat": "5",
+        "once": true,
+        "onceDelay": "3",
+        "topic": "",
+        "payload": "",
+        "payloadType": "date",
+        "x": 150,
+        "y": 560,
+        "wires": [
+            [
+                "faa463aea778a295"
+            ]
+        ]
+    },
+    {
+        "id": "faa463aea778a295",
+        "type": "function",
+        "z": "eb12423ff5842f3c",
+        "name": "Generate telemetry (car_02)",
+        "func": "const veh='car_02';\nconst light=flow.get('light_car02')||'RED';\nlet x=flow.get('x02')||Math.random()*20;let y=flow.get('y02')||Math.random()*20;let dir=flow.get('dir02')||(Math.random()<0.5?'E':'N');\nlet speed,status;if(light==='RED'){speed=0;status='Stopped';}else if(light==='YELLOW'){speed=10+Math.floor(Math.random()*21);status='Slowing';}else{speed=40+Math.floor(Math.random()*61);status='Moving';}\nif(speed>0){const step=speed/100.0;if(dir==='E')x+=step;else y+=step;if(Math.random()<0.05)dir=(dir==='E'?'N':'E');}\nx=Math.max(0,Math.min(100,x));y=Math.max(0,Math.min(100,y));flow.set('x02',x);flow.set('y02',y);flow.set('dir02',dir);\nconst payload={vehicle_id:veh,location:{x:Number(x.toFixed(3)),y:Number(y.toFixed(3))},speed,status,direction:dir,light,ts:Date.now()};\nreturn {topic:`vehicles/data/${veh}`,payload};",
+        "outputs": 1,
+        "noerr": 0,
+        "x": 420,
+        "y": 540,
+        "wires": [
+            [
+                "a9960122c2d84575",
+                "f37e31e8c0b09bc0"
+            ]
+        ]
+    },
+    {
+        "id": "a9960122c2d84575",
+        "type": "mqtt out",
+        "z": "eb12423ff5842f3c",
+        "name": "Publish telemetry",
+        "topic": "",
+        "qos": "0",
+        "retain": "",
+        "respTopic": "",
+        "contentType": "",
+        "userProps": "",
+        "correl": "",
+        "expiry": "",
+        "broker": "77d0617828af9c52",
+        "x": 930,
+        "y": 340,
+        "wires": []
+    },
+    {
+        "id": "256b188a9f7af102",
+        "type": "mqtt in",
+        "z": "eb12423ff5842f3c",
+        "name": "All vehicles",
+        "topic": "vehicles/data/#",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "77d0617828af9c52",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 460,
+        "y": 640,
+        "wires": [
+            [
+                "f37e31e8c0b09bc0"
+            ]
+        ]
+    },
+    {
+        "id": "f37e31e8c0b09bc0",
+        "type": "function",
+        "z": "eb12423ff5842f3c",
+        "name": "Split → table & chart",
+        "func": "// const p=msg.payload; const tbl={payload:[p]}; const cht={topic:p.vehicle_id,payload:p.speed}; return [tbl,cht];  \n// --- Add geographic lat/lon that matches the map ---\n// Fixed inland bboxes (no sea):\n// car_01 -> Cairo downtown, car_02 -> Giza\nconst cityByVeh = {\n  car_01: { name: 'cairo', lat: [30.00, 30.09], lon: [31.20, 31.30] },\n  car_02: { name: 'giza',  lat: [29.97, 30.06], lon: [31.05, 31.20] }\n};\n\nconst p = msg.payload;\nconst city = cityByVeh[p.vehicle_id] || cityByVeh.car_01;\n\n// Map sim x/y (0..100) into bbox\nconst clamp = v => Math.max(0, Math.min(100, v));\nlet lon = city.lon[0] + (city.lon[1] - city.lon[0]) * (clamp(p.location.x) / 100);\nlet lat = city.lat[0] + (city.lat[1] - city.lat[0]) * (clamp(p.location.y) / 100);\n\n// Snap to ~100 m grid for road-ish motion\nconst snapLat = v => Math.round(v / 0.001) * 0.001; // ~111 m\nconst snapLon = v => Math.round(v / 0.001) * 0.001; // ~96 m near Cairo\nif (p.direction === 'E') lat = snapLat(lat); else lon = snapLon(lon);\n\n// Attach to payload so *everywhere* can reuse the same numbers\np.location.lat = Number(lat.toFixed(6));\np.location.lon = Number(lon.toFixed(6));\np.area = city.name; // optional, nice to show in table if you want\n\n// Keep your existing outputs\nconst tbl = { payload: [p] };\nconst cht = { topic: p.vehicle_id, payload: p.speed };\nreturn [tbl, cht];\n",
+        "outputs": 2,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 860,
+        "y": 420,
+        "wires": [
+            [
+                "527f27b9c1f90366",
+                "ab24c86d86e86881"
+            ],
+            [
+                "75cf93b9026ba512"
+            ]
+        ]
+    },
+    {
+        "id": "527f27b9c1f90366",
+        "type": "ui_table",
+        "z": "eb12423ff5842f3c",
+        "group": "ui_grp_table",
+        "name": "Vehicles Table",
+        "order": 1,
+        "width": 27,
+        "height": 4,
+        "columns": [
+            {
+                "field": "vehicle_id",
+                "title": "Vehicle",
+                "width": "12%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "speed",
+                "title": "Speed",
+                "width": "10%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "light",
+                "title": "Light",
+                "width": "10%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "status",
+                "title": "Status",
+                "width": "15%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "direction",
+                "title": "Dir",
+                "width": "8%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "location.lon",
+                "title": "Lon",
+                "width": "14&",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "location.lat",
+                "title": "Lat",
+                "width": "14%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            },
+            {
+                "field": "ts",
+                "title": "Time",
+                "width": "20%",
+                "align": "left",
+                "formatter": "plaintext",
+                "formatterParams": {
+                    "target": "_blank"
+                }
+            }
+        ],
+        "outputs": 0,
+        "cts": false,
+        "x": 980,
+        "y": 600,
+        "wires": []
+    },
+    {
+        "id": "75cf93b9026ba512",
+        "type": "ui_chart",
+        "z": "eb12423ff5842f3c",
+        "d": true,
+        "name": "Speed per vehicle",
+        "group": "ui_grp_chart",
+        "order": 1,
+        "width": 20,
+        "height": 7,
+        "label": "",
+        "chartType": "line",
+        "legend": "true",
+        "xformat": "HH:mm:ss",
+        "interpolate": "linear",
+        "nodata": "Waiting…",
+        "dot": false,
+        "ymin": "",
+        "ymax": "",
+        "removeOlder": "240",
+        "removeOlderPoints": "",
+        "removeOlderUnit": "60",
+        "cutout": "",
+        "useOneColor": false,
+        "useUTC": false,
+        "colors": [
+            "#1f77b4",
+            "#aec7e8",
+            "#ff7f0e",
+            "#2ca02c",
+            "#98df8a",
+            "#d62728",
+            "#ff9896",
+            "#9467bd",
+            "#c5b0d5"
+        ],
+        "outputs": 1,
+        "useDifferentColor": false,
+        "className": "",
+        "x": 970,
+        "y": 660,
+        "wires": [
+            []
+        ]
+    },
+    {
+        "id": "a1g_mqtt_tap",
+        "type": "mqtt in",
+        "z": "eb12423ff5842f3c",
+        "name": "Tap vehicles for gauges",
+        "topic": "vehicles/data/#",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "77d0617828af9c52",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 160,
+        "y": 740,
+        "wires": [
+            [
+                "a1g_switch"
+            ]
+        ]
+    },
+    {
+        "id": "a1g_switch",
+        "type": "switch",
+        "z": "eb12423ff5842f3c",
+        "name": "by vehicle",
+        "property": "payload.vehicle_id",
+        "propertyType": "msg",
+        "rules": [
+            {
+                "t": "eq",
+                "v": "car_01",
+                "vt": "str"
+            },
+            {
+                "t": "eq",
+                "v": "car_02",
+                "vt": "str"
+            }
+        ],
+        "checkall": "true",
+        "repair": false,
+        "outputs": 2,
+        "x": 410,
+        "y": 740,
+        "wires": [
+            [
+                "a1g_to_gauge_car01"
+            ],
+            [
+                "a1g_to_gauge_car02"
+            ]
+        ]
+    },
+    {
+        "id": "a1g_to_gauge_car01",
+        "type": "change",
+        "z": "eb12423ff5842f3c",
+        "name": "car_01 → speed",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "car_01",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.speed",
+                "tot": "msg"
+            }
+        ],
+        "x": 660,
+        "y": 720,
+        "wires": [
+            [
+                "a1g_gauge_car01"
+            ]
+        ]
+    },
+    {
+        "id": "a1g_to_gauge_car02",
+        "type": "change",
+        "z": "eb12423ff5842f3c",
+        "name": "car_02 → speed",
+        "rules": [
+            {
+                "t": "set",
+                "p": "topic",
+                "pt": "msg",
+                "to": "car_02",
+                "tot": "str"
+            },
+            {
+                "t": "set",
+                "p": "payload",
+                "pt": "msg",
+                "to": "payload.speed",
+                "tot": "msg"
+            }
+        ],
+        "x": 660,
+        "y": 760,
+        "wires": [
+            [
+                "a1g_gauge_car02"
+            ]
+        ]
+    },
+    {
+        "id": "a1g_gauge_car01",
+        "type": "ui_gauge",
+        "z": "eb12423ff5842f3c",
+        "name": "car_01 speed",
+        "group": "ui_grp_gauges",
+        "order": 1,
+        "width": 10,
+        "height": 7,
+        "gtype": "donut",
+        "title": "car_01",
+        "label": "km/h",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "120",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3832"
+        ],
+        "seg1": "30",
+        "seg2": "60",
+        "diff": false,
+        "className": "",
+        "x": 900,
+        "y": 720,
+        "wires": []
+    },
+    {
+        "id": "a1g_gauge_car02",
+        "type": "ui_gauge",
+        "z": "eb12423ff5842f3c",
+        "name": "car_02 speed",
+        "group": "ui_grp_gauges",
+        "order": 2,
+        "width": 10,
+        "height": 7,
+        "gtype": "donut",
+        "title": "car_02",
+        "label": "km/h",
+        "format": "{{value}}",
+        "min": 0,
+        "max": "120",
+        "colors": [
+            "#00b500",
+            "#e6e600",
+            "#ca3832"
+        ],
+        "seg1": "60",
+        "seg2": "100",
+        "className": "",
+        "x": 900,
+        "y": 760,
+        "wires": []
+    },
+    {
+        "id": "map_tap_mqtt",
+        "type": "mqtt in",
+        "z": "eb12423ff5842f3c",
+        "name": "Tap vehicles for map",
+        "topic": "vehicles/data/#",
+        "qos": "0",
+        "datatype": "json",
+        "broker": "77d0617828af9c52",
+        "nl": false,
+        "rap": true,
+        "rh": 0,
+        "inputs": 0,
+        "x": 150,
+        "y": 820,
+        "wires": [
+            [
+                "to_egypt_map"
+            ]
+        ]
+    },
+    {
+        "id": "to_egypt_map",
+        "type": "function",
+        "z": "eb12423ff5842f3c",
+        "name": "x/y → lat/lon (Egypt) + marker",
+        "func": "// Each car gets a different inland bbox so markers never appear in the sea.\n// car_01 -> Cairo (downtown area), car_02 -> Giza (inland).\nconst cityByVeh = {\n  car_01: { name: 'cairo', lat: [30.00, 30.09], lon: [31.20, 31.30] },\n  car_02: { name: 'giza', lat: [29.97, 30.06], lon: [31.05, 31.20] }\n};\n\n// Read lat/lon if the upstream function already set them; otherwise compute.\nconst p = msg.payload || {};\nif (!p.location) return null;\n\nlet lat = (typeof p.location.lat === 'number') ? p.location.lat : undefined;\nlet lon = (typeof p.location.lon === 'number') ? p.location.lon : undefined;\n\nif (typeof lat !== 'number' || typeof lon !== 'number') {\n  // Fallback (same bbox + snapping so it still matches)\n  const cityByVeh = {\n    car_01: { name: 'cairo', lat: [30.00, 30.09], lon: [31.20, 31.30] },\n    car_02: { name: 'giza', lat: [29.97, 30.06], lon: [31.05, 31.20] }\n  };\n  const city = cityByVeh[p.vehicle_id] || cityByVeh.car_01;\n  const clamp = v => Math.max(0, Math.min(100, v));\n  lon = city.lon[0] + (city.lon[1] - city.lon[0]) * (clamp(p.location.x) / 100);\n  lat = city.lat[0] + (city.lat[1] - city.lat[0]) * (clamp(p.location.y) / 100);\n  const snapLat = v => Math.round(v / 0.001) * 0.001;\n  const snapLon = v => Math.round(v / 0.001) * 0.001;\n  if (p.direction === 'E') lat = snapLat(lat); else lon = snapLon(lon);\n}\n\n// Short breadcrumb trail per vehicle\nconst tkey = `track_${p.vehicle_id}`;\nlet track = flow.get(tkey) || [];\ntrack.push([lat, lon]);\nif (track.length > 40) track.shift();\nflow.set(tkey, track);\n\n// Marker styling\nconst iconColor = p.speed === 0 ? \"#d32f2f\" : (p.light === \"YELLOW\" ? \"#f9a825\" : \"#2e7d32\");\nconst bearing = p.direction === 'E' ? 90 : 0;\n\nmsg.payload = {\n  name: p.vehicle_id,\n  lat, lon,\n  layer: \"Vehicles\",\n  icon: \"car\",\n  iconColor,\n  bearing,\n  speed: p.speed,\n  popup: `${p.vehicle_id}<br>Speed: ${p.speed} km/h<br>Light: ${p.light}<br>Dir: ${p.direction}${p.area ? `<br>Area: ${p.area}` : ''}`,\n  path: track\n};\nreturn msg;\n",
+        "outputs": 1,
+        "timeout": "",
+        "noerr": 0,
+        "initialize": "",
+        "finalize": "",
+        "libs": [],
+        "x": 410,
+        "y": 820,
+        "wires": [
+            [
+                "ui_worldmap_egypt",
+                "2acf851f95f35f66"
+            ]
+        ]
+    },
+    {
+        "id": "ui_worldmap_egypt",
+        "type": "ui_worldmap",
+        "z": "eb12423ff5842f3c",
+        "group": "ui_grp_map",
+        "order": 1,
+        "width": 28,
+        "height": 12,
+        "name": "Egypt Map",
+        "lat": "30.044",
+        "lon": "31.235",
+        "zoom": "11",
+        "layer": "OSMG",
+        "cluster": "false",
+        "maxage": "0",
+        "usermenu": "hide",
+        "panit": "true",
+        "panlock": "false",
+        "zoomlock": "false",
+        "hiderightclick": "true",
+        "coords": "none",
+        "allowFileDrop": "false",
+        "path": "/ui-worldmap",
+        "overlist": "DR,CO,RA,DN,HM",
+        "maplist": "OSMG,OSMC,EsriC,EsriS,EsriT,EsriO,EsriDG,NatGeo,UKOS,OpTop",
+        "mapname": "",
+        "mapurl": "",
+        "mapopt": "",
+        "mapwms": false,
+        "x": 650,
+        "y": 820,
+        "wires": []
+    },
+    {
+        "id": "2acf851f95f35f66",
+        "type": "debug",
+        "z": "eb12423ff5842f3c",
+        "name": "debug 4",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 570,
+        "y": 900,
+        "wires": []
+    },
+    {
+        "id": "ba144b6d11237ef1",
+        "type": "debug",
+        "z": "eb12423ff5842f3c",
+        "name": "Light indicator",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "payload",
+        "targetType": "msg",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 890,
+        "y": 160,
+        "wires": []
+    },
+    {
+        "id": "ab24c86d86e86881",
+        "type": "json",
+        "z": "eb12423ff5842f3c",
+        "name": "",
+        "property": "payload",
+        "action": "",
+        "pretty": false,
+        "x": 1070,
+        "y": 420,
+        "wires": [
+            [
+                "3bd0211049f144d3"
+            ]
+        ]
+    },
+    {
+        "id": "3bd0211049f144d3",
+        "type": "debug",
+        "z": "eb12423ff5842f3c",
+        "name": "debug 6",
+        "active": true,
+        "tosidebar": true,
+        "console": false,
+        "tostatus": false,
+        "complete": "false",
+        "statusVal": "",
+        "statusType": "auto",
+        "x": 1070,
+        "y": 500,
+        "wires": []
+    },
+    {
+        "id": "60eaa178c255ca53",
+        "type": "ui_spacer",
+        "z": "eb12423ff5842f3c",
+        "name": "spacer",
+        "group": "ui_grp_controls",
+        "order": 2,
+        "width": 9,
+        "height": 1
+    },
+    {
+        "id": "77d0617828af9c52",
+        "type": "mqtt-broker",
+        "name": "",
+        "broker": "localhost",
+        "port": 1883,
+        "clientid": "",
+        "autoConnect": true,
+        "usetls": false,
+        "protocolVersion": 4,
+        "keepalive": 60,
+        "cleansession": true,
+        "autoUnsubscribe": true,
+        "birthTopic": "",
+        "birthQos": "0",
+        "birthRetain": "false",
+        "birthPayload": "",
+        "birthMsg": {},
+        "closeTopic": "",
+        "closeQos": "0",
+        "closeRetain": "false",
+        "closePayload": "",
+        "closeMsg": {},
+        "willTopic": "",
+        "willQos": "0",
+        "willRetain": "false",
+        "willPayload": "",
+        "willMsg": {},
+        "userProps": "",
+        "sessionExpiry": ""
+    },
+    {
+        "id": "ui_grp_light",
+        "type": "ui_group",
+        "name": "Traffic Light",
+        "tab": "c2ab174bfe791108",
+        "order": 1,
+        "disp": true,
+        "width": 28,
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "ui_grp_controls",
+        "type": "ui_group",
+        "name": "Controls",
+        "tab": "c2ab174bfe791108",
+        "order": 2,
+        "disp": true,
+        "width": "9",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "ui_grp_table",
+        "type": "ui_group",
+        "name": "Vehicles",
+        "tab": "c2ab174bfe791108",
+        "order": 3,
+        "disp": true,
+        "width": "27",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "ui_grp_chart",
+        "type": "ui_group",
+        "name": "Speed Chart",
+        "tab": "c2ab174bfe791108",
+        "order": 4,
+        "disp": true,
+        "width": "20",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "ui_grp_gauges",
+        "type": "ui_group",
+        "name": "Speed Gauges",
+        "tab": "c2ab174bfe791108",
+        "order": 5,
+        "disp": true,
+        "width": "20",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "ui_grp_map",
+        "type": "ui_group",
+        "name": "Map",
+        "tab": "c2ab174bfe791108",
+        "order": 6,
+        "disp": true,
+        "width": "28",
+        "collapse": false,
+        "className": ""
+    },
+    {
+        "id": "c2ab174bfe791108",
+        "type": "ui_tab",
+        "name": "v2x_project",
+        "icon": "dashboard",
+        "disabled": false,
+        "hidden": false
+    },
+    {
+        "id": "8f23022db52e548a",
+        "type": "global-config",
+        "env": [],
+        "modules": {
+            "node-red-dashboard": "3.6.6",
+            "node-red-node-ui-table": "0.4.5",
+            "node-red-contrib-web-worldmap": "5.5.1"
+        }
+    }
+]
